@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title>Assembly Line</title>
+	<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+	<script type="text/javascript">
+	Actor = {}
+	WS = {
+		socket: function() {
+			var self = this;
+
+			if (window.TheSocket) {
+				return window.TheSocket;
+			}
+
+			var conn = window.TheSocket = new WebSocket("ws://localhost:7890/connect");
+
+			conn.onopen = function() {
+				console.log("open")
+			}
+
+			conn.onclose = function() {
+				setTimeout(function(){
+					window.TheSocket = false;
+					self.socket();
+				}, 10000);
+			}
+
+			conn.onerror = function() {
+				console.log("error");
+			}
+
+			conn.onmessage = function(evt) {
+				var data = JSON.parse(evt.data);
+				if (data == null) {
+					return
+				}
+				if(data.result) {
+					data = data.result;
+				}
+				Actor[data.MethodName](data);
+			}
+
+			return window.TheSocket;
+		},
+
+		rpc: function(methodName, input) {
+			var s = this.socket()
+			if (s.readyState != 1) {
+				return
+			}
+
+			var message = JSON.stringify({"method": methodName, "params": [input]});
+			s.send(message)
+		}
+	}
+
+	function computer(comp) {
+		var c = $("<div class='Computer'><h1>"+comp.Id+"</h1></div>")
+		c.addClass("id_"+comp.Id)
+		var parts = ["C", "K", "M", "S"]
+		for(var i=0; i<parts.length; i++) {
+			if(comp[parts[i]]) {
+				c.append("<div class='Part "+parts[i]+"'></div>")
+			}
+		}
+		return c
+	}
+
+	Actor["Connection.Ready"] = function(data) {
+		// console.log(data)
+	}
+	Actor["ComputerAssemblyLine.Push"] = function(data) {
+		computer(data.Data).hide().prependTo(".ComputerAssemblyLine").fadeIn(1000)
+		// console.log(data)
+	}
+
+	Actor["Computer.Move"] = function(data) {
+		// var to = computer(data.Data.Computer).css({"visibility": "hidden"})
+		// to.prependTo("."+data.Data.To)
+
+		// console.log("moving ", data.Data.Computer.Id, " to ", to.offset().left, to.offset().top)
+
+		// var p = to.offset()
+		// $("."+data.Data.From + " .id_"+data.Data.Computer.Id).animate({
+		// 	"top" : p.top + "px",
+		// 	"left": p.left + "px"
+		// }, 500, function(){
+		// 	$(this).remove();
+		// 	to.css({"visibility": "visible"})
+		// });
+		$("."+data.Data.From + " .id_"+data.Data.Computer.Id).remove()
+		computer(data.Data.Computer).prependTo("."+data.Data.To)
+
+	}
+
+
+	WS.socket()
+
+	</script>
+
+	<style>
+	.clearfix:after {
+		content: ".";
+		display: block;
+		height: 0;
+		clear: both;
+		visibility: hidden;
+	}
+	.Part {
+		height: 20px;
+		width: 20px;
+	}
+	.Part.C {
+		position: absolute;
+		top: 0;
+		left: 0;
+		background-color: red;
+	}
+	.Part.K {
+		position: absolute;
+		top: 0;
+		left: 20px;
+		background-color: yellow;
+	}
+	.Part.M {
+		position: absolute;
+		top: 20px;
+		left: 0px;
+		background-color: green;
+	}
+	.Part.S {
+		position: absolute;
+		top: 20px;
+		left: 20px;
+		background-color: pink;
+	}
+
+	.Computer {
+		position: relative;
+		border: 3px solid #CCC;
+		height: 40px;
+		width: 40px;
+		float: left;
+		margin: 4px;
+	}
+	.Computer h1 {
+		position: absolute;
+		left: 8px;
+		top: 8px;
+		z-index: 1000;
+		margin: 0;
+		padding: 0;
+		font-size: 18px;
+		font-family: Monaco;
+		background-color: #666;
+		color: white;
+	}
+
+	.ComputerAssemblyLine, .ComputersCompleted{
+		margin-top: 30px;
+		padding: 10px;
+		border-top: 2px solid green;
+		border-bottom: 2px solid green;
+	}
+
+	.ComputersMissingCPU, .ComputersMissingMemory, .ComputersMissingKeyboard, .ComputersMissingScreen {
+		margin-top: 30px;
+		padding: 10px;
+		margin-left: 20px;
+		width: 60px;
+		float: left;
+		min-height: 80px;
+	}
+
+	.ComputersMissingCPU {
+		border-top: 10px solid red;
+		border-left: 2px solid red;
+		border-right: 2px solid red;
+
+	}
+
+	.ComputersMissingMemory {
+		border-top: 10px solid green;
+		border-left: 2px solid green;
+		border-right: 2px solid green;
+
+	}
+
+	.ComputersMissingKeyboard {
+		border-top: 10px solid yellow;
+		border-left: 2px solid yellow;
+		border-right: 2px solid yellow;
+	}
+
+	.ComputersMissingScreen {
+		border-top: 10px solid pink;
+		border-left: 2px solid pink;
+		border-right: 2px solid pink;
+	}
+
+	</style>
+</head>
+<body>
+
+<div class="ComputerAssemblyLine clearfix">
+
+</div>
+
+<div class="MissingChannels clearfix">
+	<div class="ComputersMissingCPU clearfix">
+
+	</div>
+
+	<div class="ComputersMissingMemory clearfix">
+
+	</div>
+
+	<div class="ComputersMissingKeyboard clearfix">
+
+	</div>
+
+	<div class="ComputersMissingScreen clearfix">
+
+	</div>
+</div>
+
+
+<div class="ComputersCompleted clearfix">
+
+</div>
+
+</body>
+</html>

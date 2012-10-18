@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"time"
 )
 
 type Computer struct {
-	C *CPU
-	S *Screen
-	M *Memory
-	K *Keyboard
+	Id int64
+	C  *CPU
+	S  *Screen
+	M  *Memory
+	K  *Keyboard
 }
 
 func (c Computer) String() (r string) {
@@ -30,26 +30,32 @@ func (c Computer) String() (r string) {
 	return
 }
 
-var ComputersMissingCPU = make(chan Computer)
-var ComputersMissingScreen = make(chan Computer)
-var ComputersMissingMemory = make(chan Computer)
-var ComputersMissingKeyboard = make(chan Computer)
+var ComputersMissingCPU = make(chan Computer, 10)
+var ComputersMissingScreen = make(chan Computer, 10)
+var ComputersMissingMemory = make(chan Computer, 10)
+var ComputersMissingKeyboard = make(chan Computer, 10)
 
 var ComputerAssemblyLine = make(chan Computer)
+
+// var SkeletonLine = make(chan Computer)
 
 var ComputersCompleted = make(chan Computer)
 
 func ComputerSkeletonCreator() {
 	for {
 		fmt.Println("making a skeleton")
-		ComputerAssemblyLine <- Computer{}
-		time.Sleep(1 * time.Second)
+		computer := Computer{Id: NewId()}
+		ComputerAssemblyLine <- computer
+		SendCommand("ComputerAssemblyLine.Push", computer)
+		ForDemoPause(SkeletonCreationTime)
 	}
 }
 
 func MissingPartDetector() {
 	for {
 		computerNeedAssembly := <-ComputerAssemblyLine
+		// ForDemoPause(100)
+
 		fmt.Println("detecting computer: ", computerNeedAssembly)
 		if computerNeedAssembly.C == nil {
 			go func() {
@@ -68,6 +74,7 @@ func MissingPartDetector() {
 		if computerNeedAssembly.M == nil {
 			go func() {
 				ComputersMissingMemory <- computerNeedAssembly
+
 			}()
 			continue
 		}
@@ -81,6 +88,7 @@ func MissingPartDetector() {
 		}
 
 		go func() {
+			SendCommand("Computer.Move", Movement{"ComputerAssemblyLine", "ComputersCompleted", computerNeedAssembly})
 			ComputersCompleted <- computerNeedAssembly
 		}()
 
@@ -88,16 +96,27 @@ func MissingPartDetector() {
 }
 
 func main() {
+	go MemoryMaker()
+	go CPUMaker()
+	go KeyboardMaker()
+	go ScreenMaker()
 	go ComputerSkeletonCreator()
 	go MissingPartDetector()
-	go CPUMaker()
-	go CPUAssember()
-	go KeyboardMaker()
-	go KeyboardAssember()
-	go ScreenMaker()
-	go ScreenAssember()
-	go MemoryMaker()
-	go MemoryAssember()
+
+	for i := 0; i < CPUAssemberWorkers; i++ {
+		go CPUAssember()
+	}
+	for i := 0; i < MemoryAssemberWorkers; i++ {
+		go MemoryAssember()
+	}
+	for i := 0; i < KeyboardAssemberWorkers; i++ {
+		go KeyboardAssember()
+	}
+	for i := 0; i < ScreenAssemberWorkers; i++ {
+		go ScreenAssember()
+	}
+
+	go Server()
 
 	for {
 		computer := <-ComputersCompleted
