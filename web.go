@@ -5,14 +5,33 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/rpc"
 	"net/rpc/jsonrpc"
 	"time"
 )
 
 type Movement struct {
-	From     string
-	To       string
-	Computer Computer
+	From  string
+	To    string
+	Thing interface{}
+}
+
+type Thing int
+
+type Input struct {
+	Workers map[string]int
+}
+
+type Output struct {
+	Workers map[string]Worktime
+}
+
+func (t Thing) UpdateConfig(ri *Input, reply *Output) (err error) {
+	return
+}
+
+func init() {
+	rpc.Register(new(Thing))
 }
 
 func Server() {
@@ -25,8 +44,8 @@ func Server() {
 	}
 }
 
-func ForDemoPause(millseconds int64) {
-	time.Sleep(time.Duration(millseconds) * time.Millisecond)
+func ForDemoPause(worktime time.Duration) {
+	time.Sleep(worktime)
 }
 
 var Sockets []*websocket.Conn
@@ -62,23 +81,23 @@ func SendCommand(methodName string, data interface{}) {
 	}
 }
 
-var ids chan int64
+var ids = make(map[string]chan int64)
 
-func NewId() (r int64) {
-	if ids == nil {
-		ids = make(chan int64)
+func NewId(t string) (r int64) {
+	if ids[t] == nil {
+		ids[t] = make(chan int64)
 
 		go func() {
 			var i int64
 			for {
 				i = i + 1
-				ids <- i
+				ids[t] <- i
 				if i > 10000 {
 					i = 0
 				}
 			}
 		}()
 	}
-	r = <-ids
+	r = <-ids[t]
 	return
 }

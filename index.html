@@ -76,23 +76,9 @@
 		// console.log(data)
 	}
 
-	Actor["Computer.Move"] = function(data) {
-		// var to = computer(data.Data.Computer).css({"visibility": "hidden"})
-		// to.prependTo("."+data.Data.To)
-
-		// console.log("moving ", data.Data.Computer.Id, " to ", to.offset().left, to.offset().top)
-
-		// var p = to.offset()
-		// $("."+data.Data.From + " .id_"+data.Data.Computer.Id).animate({
-		// 	"top" : p.top + "px",
-		// 	"left": p.left + "px"
-		// }, 500, function(){
-		// 	$(this).remove();
-		// 	to.css({"visibility": "visible"})
-		// });
+	Actor["Thing.Move"] = function(data) {
 		$("."+data.Data.From + " .id_"+data.Data.Computer.Id).remove()
 		computer(data.Data.Computer).prependTo("."+data.Data.To)
-
 	}
 
 

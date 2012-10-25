@@ -1,125 +1,82 @@
 package main
 
 import (
-	"fmt"
+	"time"
 )
 
-type Computer struct {
-	Id int64
-	C  *CPU
-	S  *Screen
-	M  *Memory
-	K  *Keyboard
+var CurrentWorkTime = map[string]Worktime{
+	"WashWaterPot": {1 * time.Second, 1, WashWaterPot},
+	"BoilWater":    {6 * time.Second, 1, BoilWater},
+	"WashTeaPot":   {2 * time.Second, 1, WashTeaPot},
+	"PickTea":      {1 * time.Second, 1, PickTea},
+	"MakePotOfTea": {5 * time.Second, 1, MakePotOfTea},
+	"WashCup":      {2 * time.Second, 1, WashCup},
+	"MakeCupOfTea": {0 * time.Second, 1, MakeCupOfTea},
 }
 
-func (c Computer) String() (r string) {
-	r = "Computer <"
-	if c.C != nil {
-		r = r + "=[CPU]"
+var WorkerNames = []string{
+	"WashWaterPot",
+	"BoilWater",
+	"WashTeaPot",
+	"PickTea",
+	"MakePotOfTea",
+	"WashCup",
+	"MakeCupOfTea",
+}
+
+type RestartCommand struct {
+	Quits map[string]chan int
+}
+
+func NewRestartCommand() (r RestartCommand) {
+	r = RestartCommand{}
+	r.Quits = make(map[string]chan int)
+	for _, name := range WorkerNames {
+		r.Quits[name] = make(chan int)
 	}
-	if c.S != nil {
-		r = r + "=[Screen]"
-	}
-	if c.M != nil {
-		r = r + "=[Memory]"
-	}
-	if c.K != nil {
-		r = r + "=[Keyboard]"
-	}
-	r = r + "=>"
 	return
 }
 
-var ComputersMissingCPU = make(chan Computer, 10)
-var ComputersMissingScreen = make(chan Computer, 10)
-var ComputersMissingMemory = make(chan Computer, 10)
-var ComputersMissingKeyboard = make(chan Computer, 10)
-
-var ComputerAssemblyLine = make(chan Computer)
-
-// var SkeletonLine = make(chan Computer)
-
-var ComputersCompleted = make(chan Computer)
-
-func ComputerSkeletonCreator() {
-	for {
-		fmt.Println("making a skeleton")
-		computer := Computer{Id: NewId()}
-		ComputerAssemblyLine <- computer
-		SendCommand("ComputerAssemblyLine.Push", computer)
-		ForDemoPause(SkeletonCreationTime)
-	}
+type Worktime struct {
+	Time    time.Duration
+	Workers int
+	Worker  func(worktime time.Duration) `json:"-"`
 }
 
-func MissingPartDetector() {
-	for {
-		computerNeedAssembly := <-ComputerAssemblyLine
-		// ForDemoPause(100)
+var RC = NewRestartCommand()
 
-		fmt.Println("detecting computer: ", computerNeedAssembly)
-		if computerNeedAssembly.C == nil {
-			go func() {
-				ComputersMissingCPU <- computerNeedAssembly
-			}()
-			continue
+func (rc RestartCommand) Restart(newconfig map[string]int, first bool) {
+	if !first {
+		for name, wt := range CurrentWorkTime {
+			for i := 0; i < wt.Workers; i++ {
+				rc.Quits[name] <- 1
+			}
 		}
+	}
 
-		if computerNeedAssembly.S == nil {
-			go func() {
-				ComputersMissingScreen <- computerNeedAssembly
-			}()
-			continue
+	for name, workers := range newconfig {
+		wt := CurrentWorkTime[name]
+		wt.Workers = workers
+		for i := 0; i < workers; i++ {
+			go CurrentWorkTime[name].Worker(CurrentWorkTime[name].Time)
 		}
-
-		if computerNeedAssembly.M == nil {
-			go func() {
-				ComputersMissingMemory <- computerNeedAssembly
-
-			}()
-			continue
-		}
-
-		if computerNeedAssembly.K == nil {
-			go func() {
-				ComputersMissingKeyboard <- computerNeedAssembly
-			}()
-
-			continue
-		}
-
-		go func() {
-			SendCommand("Computer.Move", Movement{"ComputerAssemblyLine", "ComputersCompleted", computerNeedAssembly})
-			ComputersCompleted <- computerNeedAssembly
-		}()
-
 	}
 }
 
 func main() {
-	go MemoryMaker()
-	go CPUMaker()
-	go KeyboardMaker()
-	go ScreenMaker()
-	go ComputerSkeletonCreator()
-	go MissingPartDetector()
-
-	for i := 0; i < CPUAssemberWorkers; i++ {
-		go CPUAssember()
-	}
-	for i := 0; i < MemoryAssemberWorkers; i++ {
-		go MemoryAssember()
-	}
-	for i := 0; i < KeyboardAssemberWorkers; i++ {
-		go KeyboardAssember()
-	}
-	for i := 0; i < ScreenAssemberWorkers; i++ {
-		go ScreenAssember()
-	}
+	RC.Restart(map[string]int{
+		"WashWaterPot": 1,
+		"BoilWater":    1,
+		"WashTeaPot":   1,
+		"PickTea":      1,
+		"MakePotOfTea": 1,
+		"WashCup":      1,
+		"MakeCupOfTea": 1,
+	}, true)
 
 	go Server()
 
 	for {
-		computer := <-ComputersCompleted
-		fmt.Println("■■■■■ Completed: ", computer)
+		<-CupsOfTea
 	}
 }
