@@ -3,7 +3,191 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title>Assembly Line</title>
-	<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+	<script src="/js/jquery-1.8.2.min.js"></script>
+
+
+	<style>
+	.clearfix:after {
+		content: ".";
+		display: block;
+		height: 0;
+		clear: both;
+		visibility: hidden;
+	}
+	.Step {
+		margin-bottom: 10px;
+	}
+
+	.GoroutineGroup {
+		float: left;
+		margin-left: 60px;
+	}
+
+	.GoroutineGroup h3 {
+		margin: 0px;
+	}
+
+	.GoroutineGroup .Goroutine {
+		min-height: 80px;
+		min-width: 80px;
+		background: url(/imgs/stopped.png) transparent center center no-repeat;
+		float:left;
+		margin-left: 2px;
+	}
+
+	.GoroutineGroup .Goroutine.running {
+		background: url(/imgs/running.gif) transparent center center no-repeat;
+	}
+	.Goroutines {
+		min-height: 80px;
+		min-width: 200px;
+		border: 3px dashed #999;
+	}
+
+	.MakePotOfTea .Goroutines {
+		width: 1000px;
+	}
+
+	.MakeCupOfTea .Goroutines {
+		width: 1260px;
+	}
+
+	.BoilWater .Goroutines {
+		width: 500px;
+	}
+
+	.Channel {
+		height: 100px;
+		width: 80px;
+		margin: 10px auto;
+		border-left: 5px solid green;
+		border-right: 5px solid green;
+		background: url(/imgs/arrow-down.png) transparent center bottom no-repeat;
+		padding-top: 10px;
+	}
+
+
+	.WashWaterPot {
+	}
+
+	.Restart {
+		float: right;
+		margin: 0;
+		margin-right: 100px;
+		font-size: 48px;
+		border: 1px solid #CCC;
+		background-color: #333;
+		color: white;
+		padding: 2px 40px;
+	}
+	.Restart.disabled {
+		background-color: #999;
+	}
+	.GoroutineCount {
+		width: 20px;
+	}
+	.Thing {
+		background-color: #666;
+		margin: 2px 8px;
+		color: white;
+	}
+	.Thing h1{
+		margin:0;
+		font-size: 24px;
+		font-family: Monaco;
+		text-align: center;
+	}
+
+	</style>
+</head>
+<body>
+
+<input type="button" value="重新启动" class="Restart"/>
+
+<div class="Step clearfix">
+	<div class="GoroutineGroup WashWaterPot clearfix">
+		<h3>洗水壶(1分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<div class="Goroutines clearfix">
+
+		</div>
+
+		<div class="Channel CleanWaterPots clearfix">
+
+		</div>
+	</div>
+
+</div>
+
+<div class="Step clearfix">
+	<div class="GoroutineGroup BoilWater clearfix">
+		<h3>烧开水(15分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<div class="Goroutines clearfix">
+
+		</div>
+
+		<div class="Channel BoiledWaterPots clearfix">
+
+		</div>
+	</div>
+
+	<div class="GoroutineGroup WashTeaPot clearfix">
+		<h3>洗茶壶(2分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<div class="Goroutines clearfix">
+
+		</div>
+
+		<div class="Channel CleanTeaPots clearfix">
+
+		</div>
+
+	</div>
+
+	<div class="GoroutineGroup PickTea clearfix">
+		<h3>拿茶叶(1分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<div class="Goroutines clearfix">
+
+		</div>
+
+		<div class="Channel TeaBags clearfix">
+
+		</div>
+	</div>
+</div>
+
+<div class="Step clearfix">
+	<div class="GoroutineGroup MakePotOfTea clearfix">
+		<h3>泡茶(5分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<div class="Goroutines clearfix">
+
+		</div>
+
+		<div class="Channel PotsOfTea clearfix">
+
+		</div>
+	</div>
+
+	<div class="GoroutineGroup WashCup clearfix">
+		<h3>洗茶杯(2分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<div class="Goroutines clearfix">
+
+		</div>
+
+		<div class="Channel CleanCups clearfix">
+
+		</div>
+	</div>
+</div>
+
+<div class="Step clearfix">
+	<div class="GoroutineGroup MakeCupOfTea clearfix">
+		<div class="Goroutines clearfix">
+
+		</div>
+	</div>
+</div>
+
+
+
 	<script type="text/javascript">
 	Actor = {}
 	WS = {
@@ -33,6 +217,7 @@
 
 			conn.onmessage = function(evt) {
 				var data = JSON.parse(evt.data);
+				// console.log(data)
 				if (data == null) {
 					return
 				}
@@ -56,166 +241,83 @@
 		}
 	}
 
-	function computer(comp) {
-		var c = $("<div class='Computer'><h1>"+comp.Id+"</h1></div>")
-		c.addClass("id_"+comp.Id)
-		var parts = ["C", "K", "M", "S"]
-		for(var i=0; i<parts.length; i++) {
-			if(comp[parts[i]]) {
-				c.append("<div class='Part "+parts[i]+"'></div>")
-			}
-		}
+	function thing(th) {
+		var c = $("<div class='Thing "+th.Name+"'><h1>"+th.Id+"</h1></div>")
 		return c
 	}
 
 	Actor["Connection.Ready"] = function(data) {
 		// console.log(data)
 	}
-	Actor["ComputerAssemblyLine.Push"] = function(data) {
-		computer(data.Data).hide().prependTo(".ComputerAssemblyLine").fadeIn(1000)
-		// console.log(data)
+
+	Actor["Goroutine.Status"] = function(data) {
+		// console.log("Goroutine.Status", data)
+		for(name in data.Data) {
+			// console.log(name)
+
+			var goroutinesdiv = $(".GoroutineGroup."+name+" .Goroutines")
+			var grs = $(".Goroutine", goroutinesdiv).get()
+			var count = 0
+			for (gr in data.Data[name].Status) {
+				count = count + 1
+				var grdiv = $(".Goroutine[data-name="+gr+"]", goroutinesdiv).get(0)
+				if(!grdiv) {
+					goroutinesdiv.append("<div class='Goroutine' data-name='"+gr+"'></div>")
+					grdiv = $(".Goroutine[data-name="+gr+"]", goroutinesdiv).get(0)
+				}
+				if(data.Data[name].Status[gr] && data.Data[name].Status[gr] == "running") {
+					$(grdiv).addClass("running")
+				} else {
+					$(grdiv).removeClass("running")
+				}
+			}
+			if(!$(".GoroutineGroup."+name+" .GoroutineCount").hasClass("CountUpdated")){
+				$(".GoroutineGroup."+name+" .GoroutineCount").val(count)
+				$(".GoroutineGroup."+name+" .GoroutineCount").addClass("CountUpdated")
+			}
+
+			for(var i=0;i<grs.length;i++) {
+				if(typeof data.Data[name].Status[$(grs[i]).data("name")] == "undefined") {
+					$(grs[i]).remove()
+				}
+			}
+
+		}
+		// console.log("Goroutine.Status", data, data.Data.WashWaterPot.Status.g1)
 	}
 
 	Actor["Thing.Move"] = function(data) {
-		$("."+data.Data.From + " .id_"+data.Data.Computer.Id).remove()
-		computer(data.Data.Computer).prependTo("."+data.Data.To)
+		console.log("Thing.Move", data)
+		// $("."+data.Data.From + " .id_"+data.Data.Thing.Id).remove()
+		$("."+data.Data.To).empty()
+		$("."+data.Data.To).append(thing(data.Data.Thing))
+	}
+
+	Actor["Restarted"] = function(data) {
+		console.log(data)
+		$(".Restart").val("重新启动").removeAttr('disabled').removeClass("disabled")
+	}
+
+	Actor["Thing.UpdateConfig"] = function(data) {
+		console.log("Thing.UpdateConfig", data)
 	}
 
 
 	WS.socket()
 
+	$(".Restart").click(function(){
+		$(".Restart").val("重启中...").attr('disabled', 'disabled').addClass("disabled")
+		WS.rpc("Thing.UpdateConfig", {"Workers":{
+			"WashWaterPot": parseInt($(".WashWaterPot .GoroutineCount").val()),
+			"BoilWater": parseInt($(".BoilWater .GoroutineCount").val()),
+			"WashTeaPot": parseInt($(".WashTeaPot .GoroutineCount").val()),
+			"PickTea": parseInt($(".PickTea .GoroutineCount").val()),
+			"MakePotOfTea": parseInt($(".MakePotOfTea .GoroutineCount").val()),
+			"WashCup": parseInt($(".WashCup .GoroutineCount").val())
+		}})
+	})
+
 	</script>
-
-	<style>
-	.clearfix:after {
-		content: ".";
-		display: block;
-		height: 0;
-		clear: both;
-		visibility: hidden;
-	}
-	.Part {
-		height: 20px;
-		width: 20px;
-	}
-	.Part.C {
-		position: absolute;
-		top: 0;
-		left: 0;
-		background-color: red;
-	}
-	.Part.K {
-		position: absolute;
-		top: 0;
-		left: 20px;
-		background-color: yellow;
-	}
-	.Part.M {
-		position: absolute;
-		top: 20px;
-		left: 0px;
-		background-color: green;
-	}
-	.Part.S {
-		position: absolute;
-		top: 20px;
-		left: 20px;
-		background-color: pink;
-	}
-
-	.Computer {
-		position: relative;
-		border: 3px solid #CCC;
-		height: 40px;
-		width: 40px;
-		float: left;
-		margin: 4px;
-	}
-	.Computer h1 {
-		position: absolute;
-		left: 8px;
-		top: 8px;
-		z-index: 1000;
-		margin: 0;
-		padding: 0;
-		font-size: 18px;
-		font-family: Monaco;
-		background-color: #666;
-		color: white;
-	}
-
-	.ComputerAssemblyLine, .ComputersCompleted{
-		margin-top: 30px;
-		padding: 10px;
-		border-top: 2px solid green;
-		border-bottom: 2px solid green;
-	}
-
-	.ComputersMissingCPU, .ComputersMissingMemory, .ComputersMissingKeyboard, .ComputersMissingScreen {
-		margin-top: 30px;
-		padding: 10px;
-		margin-left: 20px;
-		width: 60px;
-		float: left;
-		min-height: 80px;
-	}
-
-	.ComputersMissingCPU {
-		border-top: 10px solid red;
-		border-left: 2px solid red;
-		border-right: 2px solid red;
-
-	}
-
-	.ComputersMissingMemory {
-		border-top: 10px solid green;
-		border-left: 2px solid green;
-		border-right: 2px solid green;
-
-	}
-
-	.ComputersMissingKeyboard {
-		border-top: 10px solid yellow;
-		border-left: 2px solid yellow;
-		border-right: 2px solid yellow;
-	}
-
-	.ComputersMissingScreen {
-		border-top: 10px solid pink;
-		border-left: 2px solid pink;
-		border-right: 2px solid pink;
-	}
-
-	</style>
-</head>
-<body>
-
-<div class="ComputerAssemblyLine clearfix">
-
-</div>
-
-<div class="MissingChannels clearfix">
-	<div class="ComputersMissingCPU clearfix">
-
-	</div>
-
-	<div class="ComputersMissingMemory clearfix">
-
-	</div>
-
-	<div class="ComputersMissingKeyboard clearfix">
-
-	</div>
-
-	<div class="ComputersMissingScreen clearfix">
-
-	</div>
-</div>
-
-
-<div class="ComputersCompleted clearfix">
-
-</div>
 
 </body>
 </html>

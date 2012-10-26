@@ -16,6 +16,28 @@ type Movement struct {
 	Thing interface{}
 }
 
+type GoroutineGroup struct {
+	Name   string
+	Status map[string]string
+}
+
+var GoroutineGroups = make(map[string]*GoroutineGroup)
+
+func GGroup(name string) (r *GoroutineGroup) {
+	r = GoroutineGroups[name]
+
+	if r != nil {
+		return
+	}
+
+	r = &GoroutineGroup{
+		Name:   name,
+		Status: make(map[string]string),
+	}
+	GoroutineGroups[name] = r
+	return
+}
+
 type Thing int
 
 type Input struct {
@@ -23,10 +45,14 @@ type Input struct {
 }
 
 type Output struct {
-	Workers map[string]Worktime
+	MethodName string
+	Workers    map[string]*Worktime
 }
 
 func (t Thing) UpdateConfig(ri *Input, reply *Output) (err error) {
+	reply.MethodName = "Thing.UpdateConfig"
+	RC.Restart(ri.Workers, false)
+	reply.Workers = CurrentWorkTime
 	return
 }
 
@@ -78,6 +104,13 @@ func SendCommand(methodName string, data interface{}) {
 		if err != nil {
 			log.Println(err)
 		}
+	}
+}
+
+func SendGoroutineStatus() {
+	for {
+		SendCommand("Goroutine.Status", GoroutineGroups)
+		time.Sleep(time.Millisecond * 500)
 	}
 }
 

@@ -1,17 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"time"
 )
 
-var CurrentWorkTime = map[string]Worktime{
-	"WashWaterPot": {1 * time.Second, 1, WashWaterPot},
-	"BoilWater":    {6 * time.Second, 1, BoilWater},
-	"WashTeaPot":   {2 * time.Second, 1, WashTeaPot},
-	"PickTea":      {1 * time.Second, 1, PickTea},
-	"MakePotOfTea": {5 * time.Second, 1, MakePotOfTea},
-	"WashCup":      {2 * time.Second, 1, WashCup},
-	"MakeCupOfTea": {0 * time.Second, 1, MakeCupOfTea},
+var CurrentWorkTime = map[string]*Worktime{
+	"WashWaterPot": &Worktime{1 * time.Second, 1, WashWaterPot},
+	"BoilWater":    &Worktime{15 * time.Second, 1, BoilWater},
+	"WashTeaPot":   &Worktime{2 * time.Second, 1, WashTeaPot},
+	"PickTea":      &Worktime{1 * time.Second, 1, PickTea},
+	"MakePotOfTea": &Worktime{5 * time.Second, 1, MakePotOfTea},
+	"WashCup":      &Worktime{2 * time.Second, 1, WashCup},
+	"MakeCupOfTea": &Worktime{0 * time.Second, 1, MakeCupOfTea},
 }
 
 var WorkerNames = []string{
@@ -46,21 +47,26 @@ type Worktime struct {
 var RC = NewRestartCommand()
 
 func (rc RestartCommand) Restart(newconfig map[string]int, first bool) {
-	if !first {
-		for name, wt := range CurrentWorkTime {
-			for i := 0; i < wt.Workers; i++ {
-				rc.Quits[name] <- 1
+
+	fmt.Println("Restarting: ", newconfig)
+	for name, wt := range CurrentWorkTime {
+		go func(name string, wt *Worktime) {
+			if !first {
+				for i := 0; i < wt.Workers; i++ {
+					rc.Quits[name] <- 1
+				}
 			}
-		}
+			wt.Workers = newconfig[name]
+			if wt.Workers == 0 {
+				wt.Workers = 1
+			}
+			for i := 0; i < wt.Workers; i++ {
+				go wt.Worker(wt.Time)
+			}
+		}(name, wt)
 	}
 
-	for name, workers := range newconfig {
-		wt := CurrentWorkTime[name]
-		wt.Workers = workers
-		for i := 0; i < workers; i++ {
-			go CurrentWorkTime[name].Worker(CurrentWorkTime[name].Time)
-		}
-	}
+	SendCommand("Restarted", CurrentWorkTime)
 }
 
 func main() {
@@ -75,6 +81,7 @@ func main() {
 	}, true)
 
 	go Server()
+	go SendGoroutineStatus()
 
 	for {
 		<-CupsOfTea
