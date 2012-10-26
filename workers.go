@@ -77,7 +77,7 @@ func WashTeaPot(worktime time.Duration) {
 		}
 
 		gg.Status[gid] = "running"
-		teaPot := TeaPot{Name: "TeaPot", Id: NewId("WaterPot")}
+		teaPot := TeaPot{Name: "TeaPot", Id: NewId("TeaPot")}
 
 		ForDemoPause(worktime)
 		log.Println("washed a tea pot")
