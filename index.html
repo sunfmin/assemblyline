@@ -119,7 +119,7 @@
 
 <div class="Step clearfix">
 	<div class="GoroutineGroup WashWaterPot clearfix">
-		<h3>洗水壶(1分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<h3>洗水壶(1秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -193,6 +193,7 @@
 
 <div class="Step clearfix">
 	<div class="GoroutineGroup MakeCupOfTea clearfix">
+		<h3>倒茶(0.5秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -337,7 +338,8 @@
 			"WashTeaPot": parseInt($(".WashTeaPot .GoroutineCount").val()),
 			"PickTea": parseInt($(".PickTea .GoroutineCount").val()),
 			"MakePotOfTea": parseInt($(".MakePotOfTea .GoroutineCount").val()),
-			"WashCup": parseInt($(".WashCup .GoroutineCount").val())
+			"WashCup": parseInt($(".WashCup .GoroutineCount").val()),
+			"MakeCupOfTea": parseInt($(".MakeCupOfTea .GoroutineCount").val())
 		}})
 	})
 
