@@ -12,7 +12,7 @@ var CurrentWorkTime = map[string]*Worktime{
 	"PickTea":      &Worktime{1 * time.Second, 1, PickTea},
 	"MakePotOfTea": &Worktime{5 * time.Second, 1, MakePotOfTea},
 	"WashCup":      &Worktime{2 * time.Second, 1, WashCup},
-	"MakeCupOfTea": &Worktime{0 * time.Second, 1, MakeCupOfTea},
+	"MakeCupOfTea": &Worktime{500 * time.Millisecond, 1, MakeCupOfTea},
 }
 
 var WorkerNames = []string{

@@ -188,7 +188,7 @@ func MakeCupOfTea(worktime time.Duration) {
 			cupOfTea := CupOfTea{Cup: cup, PotOfTea: potOfTea, Name: "CupOfTea", Id: NewId("CupOfTea")}
 			ForDemoPause(worktime)
 			fmt.Println("made cup of tea")
-			SendCommand("Thing.Move", Movement{"", "CupsOfTea", cupOfTea})
+			SendCommand("Thing.Completed", Movement{"", "CupsOfTea", cupOfTea})
 			gg.Status[gid] = "stopped"
 
 			CupsOfTea <- cupOfTea

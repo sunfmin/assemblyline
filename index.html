@@ -98,6 +98,19 @@
 		text-align: center;
 	}
 
+	.CupsOfTea {
+		margin: 30px;
+	}
+
+	.CupsOfTea .Thing.CupOfTea{
+		color: green;
+		float: left;
+		height: 144px;
+		width: 144px;
+		margin: 2px;
+		background: url(/imgs/tea.png) transparent center center no-repeat;
+	}
+
 	</style>
 </head>
 <body>
@@ -120,7 +133,7 @@
 
 <div class="Step clearfix">
 	<div class="GoroutineGroup BoilWater clearfix">
-		<h3>烧开水(15分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<h3>烧开水(15秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -131,7 +144,7 @@
 	</div>
 
 	<div class="GoroutineGroup WashTeaPot clearfix">
-		<h3>洗茶壶(2分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<h3>洗茶壶(2秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -143,7 +156,7 @@
 	</div>
 
 	<div class="GoroutineGroup PickTea clearfix">
-		<h3>拿茶叶(1分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<h3>拿茶叶(1秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -156,7 +169,7 @@
 
 <div class="Step clearfix">
 	<div class="GoroutineGroup MakePotOfTea clearfix">
-		<h3>泡茶(5分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<h3>泡茶(5秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -167,7 +180,7 @@
 	</div>
 
 	<div class="GoroutineGroup WashCup clearfix">
-		<h3>洗茶杯(2分钟) <input type="input" value="1" class="GoroutineCount"/></h3>
+		<h3>洗茶杯(2秒) <input type="input" value="1" class="GoroutineCount"/></h3>
 		<div class="Goroutines clearfix">
 
 		</div>
@@ -186,7 +199,10 @@
 	</div>
 </div>
 
+<div class="Step clearfix CupsOfTea">
 
+
+</div>
 
 	<script type="text/javascript">
 	Actor = {}
@@ -287,10 +303,18 @@
 	}
 
 	Actor["Thing.Move"] = function(data) {
-		console.log("Thing.Move", data)
+		// console.log("Thing.Move", data)
 		// $("."+data.Data.From + " .id_"+data.Data.Thing.Id).remove()
 		$("."+data.Data.To).empty()
 		$("."+data.Data.To).append(thing(data.Data.Thing))
+	}
+
+	Actor["Thing.Completed"] = function(data) {
+		// console.log("Thing.Move", data)
+		// $("."+data.Data.From + " .id_"+data.Data.Thing.Id).remove()
+		var t = thing(data.Data.Thing).hide()
+		$("."+data.Data.To).prepend(t)
+		t.fadeIn("slow")
 	}
 
 	Actor["Restarted"] = function(data) {
