@@ -23,3 +23,8 @@
 ### 演讲稿地址
 
 https://raw.github.com/sunfmin/assemblyline/master/keynote.pdf
+
+
+演示截屏，图上的圈圈是会转的哟
+
+[screen](https://raw.github.com/sunfmin/assemblyline/master/screenshot.png)
