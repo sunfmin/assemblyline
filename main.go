@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-var CurrentWorkTime = map[string]*Worktime{
-	"WashWaterPot": &Worktime{1 * time.Second, WashWaterPot},
-	"BoilWater":    &Worktime{15 * time.Second, BoilWater},
-	"WashTeaPot":   &Worktime{2 * time.Second, WashTeaPot},
-	"PickTea":      &Worktime{1 * time.Second, PickTea},
-	"MakePotOfTea": &Worktime{5 * time.Second, MakePotOfTea},
-	"WashCup":      &Worktime{2 * time.Second, WashCup},
-	"MakeCupOfTea": &Worktime{500 * time.Millisecond, MakeCupOfTea},
+var CurrentWorkTime = []*WorkTime{
+	{"WashWaterPot", 1 * time.Second, WashWaterPot},
+	{"BoilWater", 15 * time.Second, BoilWater},
+	{"WashTeaPot", 2 * time.Second, WashTeaPot},
+	{"PickTea", 1 * time.Second, PickTea},
+	{"MakePotOfTea", 5 * time.Second, MakePotOfTea},
+	{"WashCup", 2 * time.Second, WashCup},
+	{"MakeCupOfTea", 500 * time.Millisecond, MakeCupOfTea},
 }
 
 var WorkerNames = []string{
@@ -38,58 +38,59 @@ func NewRestartCommand() (r RestartCommand) {
 	return
 }
 
-type Worktime struct {
+type WorkTime struct {
+	Name   string
 	Time   time.Duration
-	Worker func(worktime time.Duration) `json:"-"`
+	Worker func(workTime time.Duration) `json:"-"`
 }
 
 var RC = NewRestartCommand()
 
-func (rc RestartCommand) Restart(newconfig map[string]int, first bool) {
+func (rc RestartCommand) Restart(config map[string]int, first bool) {
 
-	log.Println("Restarting: ", newconfig)
-	var finshed = make(chan int)
-	for name, wt := range CurrentWorkTime {
-		go func(name string, wt *Worktime) {
-			newworkers := newconfig[name]
-			if newworkers == 0 {
-				newworkers = 1
+	log.Println("Restarting: ", config)
+	var finished = make(chan int)
+	for _, wt := range CurrentWorkTime {
+		go func(name string, wt *WorkTime) {
+			workers := config[name]
+			if workers == 0 {
+				workers = 1
 			}
 
-			if newworkers > 60 {
-				newworkers = 60
+			if workers > 60 {
+				workers = 60
 			}
 			gg := GGroup(name)
 			runningWorkers := len(gg.Status)
 
-			if newworkers == runningWorkers {
-				finshed <- 1
+			if workers == runningWorkers {
+				finished <- 1
 				return
 			}
 
-			if newworkers > runningWorkers {
-				added := newworkers - runningWorkers
+			if workers > runningWorkers {
+				added := workers - runningWorkers
 				for i := 0; i < added; i++ {
 					go wt.Worker(wt.Time)
 				}
-				finshed <- 1
+				finished <- 1
 				return
 			}
 
-			killed := (runningWorkers - newworkers)
+			killed := runningWorkers - workers
 			for i := 0; i < killed; i++ {
 				go func() {
 					rc.Quits[name] <- 1
 				}()
 			}
-			finshed <- 1
+			finished <- 1
 			return
-		}(name, wt)
+		}(wt.Name, wt)
 	}
 	i := 0
 
 	for {
-		_ = <-finshed
+		_ = <-finished
 		if i >= 6 {
 			log.Println("Restarted All Finished")
 			SendCommand("Restarted", CurrentWorkTime)

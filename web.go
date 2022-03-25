@@ -1,13 +1,14 @@
 package main
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 type Movement struct {
@@ -46,7 +47,7 @@ type Input struct {
 
 type Output struct {
 	MethodName string
-	Workers    map[string]*Worktime
+	Workers    []*WorkTime
 }
 
 func (t Thing) UpdateConfig(ri *Input, reply *Output) (err error) {
